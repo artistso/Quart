@@ -1,0 +1,97 @@
+# Builds the Quart TWA as a signed APK + AAB with Bubblewrap and publishes
+# them as workflow artifacts (attached to the release on release events).
+#
+# Signing:
+#   * If the repo defines the secrets PLAY_KEYSTORE_B64 (base64 of the .jks),
+#     PLAY_KEYSTORE_PASSWORD and PLAY_KEY_PASSWORD, the upload key is used.
+#   * Otherwise an ephemeral key is generated per run — fine for sideloading
+#     and internal testing; a Play upload key must be stable.
+#
+# After the first signed build, copy the printed SHA-256 fingerprint into the
+# QUART_SHA256_FINGERPRINT secret (and .well-known/assetlinks.json) so the APK
+# is verified against the Pages origin.
+name: Android APK / AAB
+
+on:
+  release:
+    types: [created]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Point Bubblewrap at the JDK + Android SDK
+        run: |
+          npx bubblewrap updateConfig --jdkPath "$JAVA_HOME" --androidSdkPath "$ANDROID_HOME"
+          npx bubblewrap doctor || true
+
+      - name: Prepare signing key
+        id: key
+        run: |
+          mkdir -p android/keystore
+          if [ -n "$PLAY_KEYSTORE_B64" ]; then
+            echo "Using repository upload key"
+            echo "$PLAY_KEYSTORE_B64" | base64 -d > android/keystore/quart-release.jks
+            echo "BUBBLEWRAP_KEYSTORE_PASSWORD=$PLAY_KEYSTORE_PASSWORD" >> "$GITHUB_ENV"
+            echo "BUBBLEWRAP_KEY_PASSWORD=$PLAY_KEY_PASSWORD" >> "$GITHUB_ENV"
+          else
+            echo "Generating ephemeral signing key"
+            PASS="quart-$(date +%s)-ephemeral"
+            keytool -genkeypair -v \
+              -keystore android/keystore/quart-release.jks -alias quart \
+              -keyalg RSA -keysize 2048 -validity 10000 \
+              -storepass "$PASS" -keypass "$PASS" \
+              -dname "CN=Quart, OU=artistso, O=artistso, C=US"
+            echo "BUBBLEWRAP_KEYSTORE_PASSWORD=$PASS" >> "$GITHUB_ENV"
+            echo "BUBBLEWRAP_KEY_PASSWORD=$PASS" >> "$GITHUB_ENV"
+          fi
+        env:
+          PLAY_KEYSTORE_B64: ${{ secrets.PLAY_KEYSTORE_B64 }}
+          PLAY_KEYSTORE_PASSWORD: ${{ secrets.PLAY_KEYSTORE_PASSWORD }}
+          PLAY_KEY_PASSWORD: ${{ secrets.PLAY_KEY_PASSWORD }}
+
+      - name: Build APK + AAB
+        run: |
+          cd android
+          npx bubblewrap build --manifest twa-manifest.json
+
+      - name: Print upload-key fingerprint (for assetlinks.json)
+        run: |
+          keytool -list -v -keystore android/keystore/quart-release.jks \
+            -storepass "$BUBBLEWRAP_KEYSTORE_PASSWORD" | grep -A1 'SHA256:' || true
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: quart-android
+          path: |
+            android/app-release-signed.apk
+            android/app-release-bundle.aab
+          if-no-files-found: error
+
+      - name: Attach to release
+        if: github.event_name == 'release'
+        run: |
+          gh release upload "$GITHUB_REF_NAME" \
+            android/app-release-signed.apk android/app-release-bundle.aab \
+            --clobber
+        env:
+          GH_TOKEN: ${{ github.token }}

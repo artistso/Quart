@@ -1,0 +1,50 @@
+# Builds the static site and deploys it to GitHub Pages.
+#
+# First-time repo setup (once, by a repo admin):
+#   Settings → Pages → Build and deployment → Source: "GitHub Actions"
+# (or: gh api repos/artistso/Quart/pages -X POST -f build_type=workflow)
+#
+# The site is base-path independent, so it works both as project pages
+# (https://artistso.github.io/Quart/) and from a custom domain root.
+name: GitHub Pages
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Build dist/
+        run: node scripts/build.js
+        env:
+          QUART_SHA256_FINGERPRINT: ${{ secrets.QUART_SHA256_FINGERPRINT }}
+
+      - uses: actions/configure-pages@v5
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist
+
+      - id: deployment
+        uses: actions/deploy-pages@v4

@@ -1,2 +1,12 @@
-assets/icon-*.png
 .DS_Store
+node_modules/
+dist/
+android/.gradle/
+android/build/
+android/app/build/
+android/keystore/*.jks
+android/keystore/*.pem
+android/app-release*
+android/app-release-bundle.aab
+android/manifest-checksum.txt.bak
+*.local
