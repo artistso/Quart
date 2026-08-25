@@ -5,6 +5,25 @@
 
 const Quart = {
   init() {
+    // Canvas roundRect polyfill for older Android browsers
+    if (!CanvasRenderingContext2D.prototype.roundRect) {
+      CanvasRenderingContext2D.prototype.roundRect = function(x, y, w, h, r) {
+        if (typeof r === 'number') r = [r,r,r,r];
+        this.beginPath();
+        this.moveTo(x + r[0], y);
+        this.lineTo(x + w - r[1], y);
+        this.quadraticCurveTo(x + w, y, x + w, y + r[1]);
+        this.lineTo(x + w, y + h - r[2]);
+        this.quadraticCurveTo(x + w, y + h, x + w - r[2], y + h);
+        this.lineTo(x + r[3], y + h);
+        this.quadraticCurveTo(x, y + h, x, y + h - r[3]);
+        this.lineTo(x, y + r[0]);
+        this.quadraticCurveTo(x, y, x + r[0], y);
+        this.closePath();
+        return this;
+      };
+    }
+
     console.log('%c◈ QUART', 'font-size:24px; font-weight:bold; color:#7c5cff; text-shadow:0 0 10px #7c5cff;');
     console.log('%cQuantum Drawing Engine v0.1 — Tab S10+ Edition', 'color:#ff3366; font-size:11px;');
     console.log('%c"Everything is a superposition until observed."', 'color:#00e5ff; font-style:italic;');
@@ -71,9 +90,13 @@ const Quart = {
       if (e.key === ']') { this.cycleBrush(1); }
       if (e.key === 'b') { ToolPuckUI.selectTool('quantum-brush'); }
       if (e.key === 'p') { ToolPuckUI.selectTool('quantum-pen'); }
+      if (e.key === 'm') { ToolPuckUI.selectTool('marker'); }
+      if (e.key === 'n') { if (e.shiftKey) ToolPuckUI.selectTool('neon'); else Animation.toggleOnion(); }
+      if (e.key === 'w') { ToolPuckUI.selectTool('watercolor'); }
       if (e.key === 'e') { ToolPuckUI.selectTool('eraser'); }
+      if (e.key === 'a') { ToolPuckUI.selectTool('airbrush'); }
       if (e.key === 'f') { ToolPuckUI.selectTool('fill'); }
-      if (e.key === 'n') { Animation.toggleOnion(); }
+      if (e.key === 'i') { ToolPuckUI.selectTool('eyedropper'); }
       if (e.key === 'Escape') { PuckSystem.collapseAll(); }
     });
 
@@ -102,7 +125,7 @@ const Quart = {
   },
 
   cycleBrush(dir) {
-    const tools = Object.keys(Brushes.settings);
+    const tools = ['quantum-pen','pencil','quantum-brush','marker','airbrush','watercolor','neon','eraser','smudge','fill'];
     const idx = tools.indexOf(Brushes.current);
     const next = tools[(idx + dir + tools.length) % tools.length];
     ToolPuckUI.selectTool(next);

@@ -54,12 +54,16 @@ const ToolPuckUI = {
     const names = {
       'quantum-pen': 'Quantum Pen',
       'quantum-brush': 'Wave Brush',
-      'airbrush': 'Probability Spray',
+      'marker': 'Copic Marker',
       'pencil': 'Graphite Pencil',
+      'airbrush': 'Probability Spray',
+      'watercolor': 'Quantum Wash',
+      'neon': 'Photon Emitter',
       'eraser': 'Quantum Vacuum',
       'smudge': 'Wavefunction Smudge',
       'fill': 'Entangled Fill',
-      'select': 'Observer Select'
+      'eyedropper': 'Observer',
+      'select': 'Lasso Select'
     };
     return names[tool] || tool;
   }

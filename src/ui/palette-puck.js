@@ -10,6 +10,7 @@ const PalettePuck = {
   ctx: null,
   picking: false,
   hue: 330, sat: 80, val: 100,
+  cssSize: 200,
 
   init() {
     this.puck = document.getElementById('color-puck');
@@ -24,77 +25,88 @@ const PalettePuck = {
 
   renderWheel() {
     const ctx = this.ctx;
-    const w = this.wheel.width, h = this.wheel.height;
-    const cx = w/2, cy = h/2;
-    const radius = Math.min(cx, cy) - 10;
-    ctx.clearRect(0,0,w,h);
+    const size = this.cssSize;
+    const dpr = window.devicePixelRatio || 1;
+    this.wheel.width = size * dpr;
+    this.wheel.height = size * dpr;
+    this.wheel.style.width = size + 'px';
+    this.wheel.style.height = size + 'px';
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ctx.clearRect(0, 0, size, size);
+    const cx = size/2, cy = size/2;
+    const outerR = size/2 - 8;
+    const ringWidth = 22;
+    const innerR = outerR - ringWidth;
 
+    // Draw saturation/value disk (inner area) — we lock V=1, S varies with radius
     // Draw hue ring
-    const img = ctx.createImageData(w, h);
-    for (let y = 0; y < h; y++) {
-      for (let x = 0; x < w; x++) {
-        const dx = x - cx, dy = y - cy;
-        const dist = Math.sqrt(dx*dx + dy*dy);
-        const idx = (y * w + x) * 4;
-        if (dist > radius - 25 && dist < radius) {
-          const angle = Math.atan2(dy, dx);
-          let hue = (angle * 180 / Math.PI + 360) % 360;
-          // Hue ring - full saturation, full value
-          const rgb = this.hsvToRgb(hue, 100, 100);
-          img.data[idx] = rgb.r;
-          img.data[idx+1] = rgb.g;
-          img.data[idx+2] = rgb.b;
-          img.data[idx+3] = 255;
-        } else if (dist <= radius - 25) {
-          // Saturation/Value square mapped to circle
-          const angle = Math.atan2(dy, dx);
-          let hue = (angle * 180 / Math.PI + 360) % 360;
-          const sat = Math.min(100, dist / (radius - 25) * 100);
-          const val = 100 - (dist / (radius - 25) * 20);
-          const rgb = this.hsvToRgb(this.hue, sat, val);
-          img.data[idx] = rgb.r;
-          img.data[idx+1] = rgb.g;
-          img.data[idx+2] = rgb.b;
-          img.data[idx+3] = 255;
-        } else {
-          img.data[idx+3] = 0;
-        }
-      }
+    for (let a = 0; a < 360; a += 0.5) {
+      const rad = (a - 90) * Math.PI/180;
+      const grad = ctx.createLinearGradient(
+        cx + Math.cos(rad)*innerR, cy + Math.sin(rad)*innerR,
+        cx + Math.cos(rad)*outerR, cy + Math.sin(rad)*outerR
+      );
+      grad.addColorStop(0, `hsl(${a}, 100%, 50%)`);
+      grad.addColorStop(1, `hsl(${a}, 100%, 50%)`);
+      ctx.strokeStyle = grad;
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.arc(cx, cy, (innerR+outerR)/2, rad-0.01, rad+0.01);
+      ctx.stroke();
     }
-    ctx.putImageData(img, 0, 0);
 
-    // Draw selector
-    const selAngle = (this.hue / 360) * Math.PI * 2 - Math.PI/2;
-    const selDist = (this.sat / 100) * (radius - 25);
-    const sx = cx + Math.cos(selAngle) * selDist;
-    const sy = cy + Math.sin(selAngle) * selDist;
+    // Inner disk: saturation varies with radius, value fixed at current (rough)
+    const diskGrad = ctx.createRadialGradient(cx,cy,0, cx,cy,innerR);
+    diskGrad.addColorStop(0, `hsl(${this.hue}, 100%, 100%)`);
+    diskGrad.addColorStop(0.6, `hsl(${this.hue}, 100%, 60%)`);
+    diskGrad.addColorStop(1, `hsl(${this.hue}, 100%, 50%)`);
+    ctx.beginPath(); ctx.arc(cx,cy,innerR,0,Math.PI*2);
+    ctx.fillStyle = diskGrad; ctx.fill();
 
-    ctx.beginPath();
-    ctx.arc(sx, sy, 8, 0, Math.PI * 2);
-    ctx.strokeStyle = 'white';
-    ctx.lineWidth = 2;
-    ctx.stroke();
-    ctx.beginPath();
-    ctx.arc(sx, sy, 4, 0, Math.PI * 2);
-    ctx.fillStyle = this.hsvToHex(this.hue, this.sat, this.val);
-    ctx.fill();
+    // Saturation overlay: white at center fading out (saturation decreases toward center)
+    const whiteGrad = ctx.createRadialGradient(cx,cy,0, cx,cy,innerR);
+    whiteGrad.addColorStop(0, 'rgba(255,255,255,1)');
+    whiteGrad.addColorStop(1, 'rgba(255,255,255,0)');
+    ctx.fillStyle = whiteGrad;
+    ctx.beginPath(); ctx.arc(cx,cy,innerR,0,Math.PI*2); ctx.fill();
 
-    // Center shows current color
-    ctx.beginPath();
-    ctx.arc(cx, cy, 12, 0, Math.PI * 2);
-    ctx.fillStyle = this.hsvToHex(this.hue, this.sat, this.val);
-    ctx.fill();
-    ctx.strokeStyle = 'rgba(255,255,255,0.5)';
-    ctx.lineWidth = 2;
-    ctx.stroke();
+    // Outer ring border
+    ctx.strokeStyle = 'rgba(255,255,255,0.15)';
+    ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.arc(cx,cy,outerR,0,Math.PI*2); ctx.stroke();
+    ctx.beginPath(); ctx.arc(cx,cy,innerR,0,Math.PI*2); ctx.stroke();
+
+    // Current color indicator: dot on the hue ring at selected hue
+    const hRad = (this.hue - 90) * Math.PI/180;
+    const hx = cx + Math.cos(hRad)*((innerR+outerR)/2);
+    const hy = cy + Math.sin(hRad)*((innerR+outerR)/2);
+    // Dot on disk for saturation
+    const sRad = (this.sat/100) * innerR;
+    const sAngle = hRad; // saturation sits along same hue direction
+    const sx = cx + Math.cos(sAngle)*sRad;
+    const sy = cy + Math.sin(sAngle)*sRad;
+
+    ctx.beginPath(); ctx.arc(sx, sy, 7, 0, Math.PI*2);
+    ctx.strokeStyle = 'white'; ctx.lineWidth = 2; ctx.stroke();
+    ctx.beginPath(); ctx.arc(sx, sy, 4, 0, Math.PI*2);
+    ctx.fillStyle = this.hsvToHex(this.hue, this.sat, this.val); ctx.fill();
+
+    // Hue marker
+    ctx.beginPath(); ctx.arc(hx, hy, 5, 0, Math.PI*2);
+    ctx.strokeStyle = 'white'; ctx.lineWidth = 2; ctx.stroke();
+
+    // Center shows current color (clean fill)
+    ctx.beginPath(); ctx.arc(cx, cy, 10, 0, Math.PI*2);
+    ctx.fillStyle = this.hsvToHex(this.hue, this.sat, this.val); ctx.fill();
+    ctx.strokeStyle = 'rgba(255,255,255,0.5)'; ctx.lineWidth = 1.5; ctx.stroke();
   },
 
   renderCopicPalette() {
     const container = document.getElementById('copic-palette');
     container.innerHTML = '';
     const colors = CopicPalette.shiftedColors;
-    // Show 24 most commonly used colors (curated)
-    const display = colors.slice(0, 24);
+    // Curate to 28 most useful colors
+    const display = colors.slice(0, 28);
     display.forEach((c, i) => {
       const sw = document.createElement('div');
       sw.className = 'copic-swatch';
@@ -102,7 +114,7 @@ const PalettePuck = {
       sw.title = c.name;
       sw.addEventListener('click', () => {
         const hsl = CopicPalette.hexToHsl(c.hex);
-        this.setColor(hsl.h, hsl.s, hsl.l, true); // lightness treated as value approx
+        this.setColor(hsl.h, Math.min(100,hsl.s), Math.min(100, hsl.l));
         QuantumAudio.colorShift();
         document.querySelectorAll('.copic-swatch').forEach(s => s.classList.remove('active'));
         sw.classList.add('active');
@@ -116,14 +128,14 @@ const PalettePuck = {
     this.wheel.addEventListener('pointermove', (e) => { if (this.picking) this.pick(e); });
     this.wheel.addEventListener('pointerup', () => this.picking = false);
     this.wheel.addEventListener('pointercancel', () => this.picking = false);
+    this.wheel.addEventListener('pointerleave', () => this.picking = false);
 
-    // Numeric inputs
     ['h','s','v'].forEach(comp => {
       const input = document.getElementById(`color-${comp}`);
       input.addEventListener('input', () => {
-        this.hue = parseFloat(document.getElementById('color-h').value) || 0;
-        this.sat = parseFloat(document.getElementById('color-s').value) || 0;
-        this.val = parseFloat(document.getElementById('color-v').value) || 0;
+        this.hue = Math.max(0,Math.min(360,parseFloat(document.getElementById('color-h').value) || 0));
+        this.sat = Math.max(0,Math.min(100,parseFloat(document.getElementById('color-s').value) || 0));
+        this.val = Math.max(0,Math.min(100,parseFloat(document.getElementById('color-v').value) || 0));
         this.updateColor();
       });
     });
@@ -143,46 +155,52 @@ const PalettePuck = {
 
   startPick(e) {
     this.picking = true;
-    this.wheel.setPointerCapture(e.pointerId);
+    try { this.wheel.setPointerCapture(e.pointerId); } catch(_){}
     this.pick(e);
   },
 
   pick(e) {
     const rect = this.wheel.getBoundingClientRect();
-    const scaleX = this.wheel.width / rect.width;
-    const scaleY = this.wheel.height / rect.height;
-    const x = (e.clientX - rect.left) * scaleX;
-    const y = (e.clientY - rect.top) * scaleY;
-    const cx = this.wheel.width/2, cy = this.wheel.height/2;
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+    const size = this.cssSize;
+    const cx = size/2, cy = size/2;
+    const outerR = size/2 - 8;
+    const ringWidth = 22;
+    const innerR = outerR - ringWidth;
     const dx = x - cx, dy = y - cy;
     const dist = Math.sqrt(dx*dx + dy*dy);
-    const radius = Math.min(cx, cy) - 10;
-    if (dist > radius) return;
-    const angle = Math.atan2(dy, dx);
-    this.hue = (angle * 180 / Math.PI + 360) % 360;
-    if (dist > radius - 25) {
-      // On hue ring - keep sat/val
+
+    if (dist > outerR + 4) return;
+
+    let angle = Math.atan2(dy, dx) * 180/Math.PI + 90;
+    angle = (angle + 360) % 360;
+
+    if (dist > innerR) {
+      // On hue ring
+      this.hue = angle;
     } else {
-      this.sat = Math.min(100, (dist / (radius - 25)) * 100);
-      this.val = 100;
+      // On disk - set saturation
+      this.hue = angle;
+      this.sat = Math.min(100, Math.max(0, (dist / innerR) * 100));
     }
+    this.val = 100;
     this.updateColor();
   },
 
-  setColor(h, s, v, skipRender) {
+  setColor(h, s, v) {
     this.hue = h; this.sat = s; this.val = v;
-    this.updateColor(skipRender);
+    this.updateColor();
   },
 
-  updateColor(skipRender) {
+  updateColor() {
     const hex = this.hsvToHex(this.hue, this.sat, this.val);
     Renderer.setColor(hex);
     document.getElementById('color-h').value = Math.round(this.hue);
     document.getElementById('color-s').value = Math.round(this.sat);
     document.getElementById('color-v').value = Math.round(this.val);
     document.getElementById('color-hex').value = hex.toUpperCase();
-    if (!skipRender) this.renderWheel();
-    else this.renderWheel();
+    this.renderWheel();
   },
 
   hsvToRgb(h, s, v) {
@@ -209,7 +227,6 @@ const PalettePuck = {
     return '#' + [r,g,b].map(c => c.toString(16).padStart(2,'0')).join('');
   },
 
-  /** Called when theme changes to refresh the palette */
   refreshPalette() {
     CopicPalette.applyTheme(CopicPalette.currentTheme);
     this.renderCopicPalette();

@@ -1,0 +1,44 @@
+{
+  "packageId": "app.quart.editor",
+  "host": "app.quart.editor",
+  "name": "Quart — Quantum Drawing Engine",
+  "launcherName": "Quart",
+  "display": "fullscreen",
+  "orientation": "landscape",
+  "themeColor": "#0a0a12",
+  "navigationColor": "#000000",
+  "backgroundColor": "#0a0a12",
+  "versionCode": 1,
+  "versionName": "0.1.0",
+  "startUrl": "/",
+  "iconUrl": "/assets/icon-512.png",
+  "maskableIconUrl": "/assets/icon-512.png",
+  "splashScreenFadeOutDuration": 300,
+  "signingKey": {
+    "path": "./keystore/quart-release.jks",
+    "alias": "quart"
+  },
+  "appVersionName": "0.1.0",
+  "appVersionCode": 1,
+  "shortcuts": [
+    {
+      "name": "New Drawing",
+      "shortName": "New",
+      "url": "/?new"
+    }
+  ],
+  "price": {
+    "amount": "0.99",
+    "currency": "USD",
+    "oneTime": true
+  },
+  "permissions": [],
+  "features": {
+    "locationBypass": false,
+    "playBilling": {
+      "enabled": true,
+      "sku": "quart_unlock",
+      "oneTimePurchase": true
+    }
+  }
+}
