@@ -5,13 +5,18 @@
   "private": true,
   "scripts": {
     "start": "npx serve -l 8080 .",
+    "icons": "bash scripts/build-icons.sh",
     "build": "node scripts/build.js",
-    "twa": "bubblewrap build",
-    "twa:init": "bubblewrap init --manifest=./manifest.json"
+    "validate": "node scripts/validate.js",
+    "test": "node scripts/validate.js",
+    "android:generate": "node scripts/generate-android.mjs",
+    "twa": "cd android && bubblewrap build",
+    "twa:init": "node scripts/generate-android.mjs"
   },
   "keywords": ["drawing", "animation", "quantum", "android", "tab"],
   "author": "artistso",
   "license": "UNLICENSED",
-  "devDependencies": {},
-  "dependencies": {}
+  "devDependencies": {
+    "@bubblewrap/cli": "^1.25.0"
+  }
 }

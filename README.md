@@ -83,10 +83,19 @@ Changing the canvas theme *physically shifts the Copic marker palette* through H
 ```
 Quart/
 ├── index.html              # App entry
-├── manifest.json           # PWA manifest for Play Store wrapping
-├── assets/
-│   ├── icon-192.png
-│   └── icon-512.png
+├── manifest.json           # PWA manifest (relative URLs, base-path independent)
+├── sw.js                   # Offline cache, scope-relative precache
+├── assets/                 # Icons / splash (npm run icons)
+├── .well-known/            # assetlinks.json template for TWA verification
+├── android/                # Committed Bubblewrap TWA project (generated)
+│   └── twa-manifest.json   #   ← source of truth for the APK
+├── scripts/
+│   ├── build.js            # dist/ builder for GitHub Pages
+│   ├── validate.js         # artifact validator (npm test)
+│   ├── generate-android.mjs# deterministic TWA regeneration
+│   └── build-icons.sh      # icon artwork renderer
+├── ci/github-actions/      # ready-made pages.yml · android.yml · ci.yml
+│                           # (move to .github/workflows/ to activate)
 └── src/
     ├── styles/
     │   └── main.css        # Full transparent/glassmorphic theme
@@ -112,21 +121,40 @@ Quart/
 
 ## Building for Google Play
 
-1. Wrap as TWA (Trusted Web Activity) using Bubblewrap:
-   ```bash
-   npm install -g @bubblewrap/cli
-   bubblewrap init --manifest=https://your-deploy-url/manifest.json
-   bubblewrap build
-   ```
-2. Upload the generated `.aab` to Google Play Console
+The `android/` directory is a committed Bubblewrap TWA project driven by
+`android/twa-manifest.json`:
+
+- **Local build:** `npm run twa` (needs JDK 17 + Android SDK) → signed APK + AAB.
+- **CI build:** the ready-made `ci/github-actions/android.yml` workflow builds
+  it on GitHub runners for every release once moved into `.github/workflows/`
+  (one human push — the CI app token can't add workflow files; details in
+  [BUILD.md](BUILD.md)).
+
+1. `Actions → Android APK / AAB → Run workflow` (or cut a release)
+2. Download `quart-android` — `app-release-signed.apk` (sideload with `adb install`) and `app-release-bundle.aab` (Play Console upload)
 3. Price: $0.99 one-time purchase (no subscriptions, no IAP)
+
+Add the `PLAY_KEYSTORE_B64` / `PLAY_KEYSTORE_PASSWORD` / `PLAY_KEY_PASSWORD`
+secrets to sign with your stable Play upload key; without them an ephemeral
+key is generated per run. Local build: `npm run twa` (needs JDK 17 + Android
+SDK). Full details in [BUILD.md](BUILD.md).
+
+## GitHub Pages
+
+Fastest: Settings → Pages → Source: *Deploy from a branch* → `main`, `/ (root)` —
+the repo root is directly servable (`.nojekyll` included).
+Automated: move `ci/github-actions/pages.yml` into `.github/workflows/`
+(one human push) and set Pages source to *GitHub Actions*; every push to
+`main` then builds and deploys `dist/`. The app is base-path independent, so
+it runs at `https://artistso.github.io/Quart/` or any custom domain.
 
 ## Local Development
 
 Serve the directory with any static server:
 
 ```bash
-npx serve .
+npm install
+npm start
 # or
 python3 -m http.server 8080
 ```

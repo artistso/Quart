@@ -1,36 +1,40 @@
 {
   "name": "Quart — Quantum Drawing Engine",
   "short_name": "Quart",
-  "id": "./",
+  "id": "https://artistso.github.io/Quart/",
   "description": "Quantum-mechanical drawing and animation app for Galaxy Tab S10+",
-  "start_url": "./",
-  "scope": "./",
+  "start_url": "https://artistso.github.io/Quart/",
+  "scope": "https://artistso.github.io/Quart/",
   "display": "fullscreen",
   "orientation": "landscape",
   "background_color": "#0a0a12",
   "theme_color": "#7c5cff",
-  "categories": ["art", "design", "graphics"],
+  "categories": [
+    "art",
+    "design",
+    "graphics"
+  ],
   "icons": [
     {
-      "src": "assets/icon-192.png",
+      "src": "https://artistso.github.io/Quart/assets/icon-192.png",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "assets/icon-512.png",
+      "src": "https://artistso.github.io/Quart/assets/icon-512.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "assets/icon-maskable-192.png",
+      "src": "https://artistso.github.io/Quart/assets/icon-maskable-192.png",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "maskable"
     },
     {
-      "src": "assets/icon-maskable-512.png",
+      "src": "https://artistso.github.io/Quart/assets/icon-maskable-512.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "maskable"
@@ -38,7 +42,7 @@
   ],
   "screenshots": [
     {
-      "src": "assets/splash-1280x800.png",
+      "src": "https://artistso.github.io/Quart/assets/splash-1280x800.png",
       "sizes": "1280x800",
       "type": "image/png",
       "form_factor": "wide",
@@ -46,7 +50,13 @@
     }
   ],
   "shortcuts": [
-    { "name": "New Drawing", "url": "./?new" },
-    { "name": "Animation", "url": "./?anim" }
+    {
+      "name": "New Drawing",
+      "url": "https://artistso.github.io/Quart/?new"
+    },
+    {
+      "name": "Animation",
+      "url": "https://artistso.github.io/Quart/?anim"
+    }
   ]
 }

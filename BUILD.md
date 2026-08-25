@@ -1,137 +1,170 @@
-# Building Quart for Google Play — $0.99 One-Time Purchase
+# Building Quart — GitHub Pages + Google Play APK ($0.99 one-time)
 
-## Development
+Two release pipelines ship from this repo. Their GitHub Actions definitions
+live in `ci/github-actions/` and activate the moment they are moved into
+`.github/workflows/` (the CI app token is not allowed to push workflow files,
+so a human push is required for that one step — see "Activating the
+workflows" below):
+
+| Pipeline | Definition | Output |
+|----------|------------|--------|
+| Web / PWA | `ci/github-actions/pages.yml` | https://artistso.github.io/Quart/ |
+| Android TWA | `ci/github-actions/android.yml` | `app-release-signed.apk` + `app-release-bundle.aab` |
+| Sanity gate | `ci/github-actions/ci.yml` | validates + builds on every push/PR |
+
+### Zero-config GitHub Pages (no Actions needed)
+
+The repo root is directly servable, so Pages works **right now** with branch
+deployment: Settings → Pages → Source: *Deploy from a branch* → `main`, `/ (root)`.
+
+### Activating the workflows
 
 ```bash
-# Serve locally
-python3 -m http.server 8080
-# or
-npx serve -l 8080 .
+git mv ci/github-actions/*.yml .github/workflows/
+git commit -m "Enable Pages + Android pipelines"
+git push                      # from a human account
+```
+
+After that, every push to `main` deploys Pages and every release builds the
+APK/AAB. Also set Settings → Pages → Source: *GitHub Actions*.
+
+## Local development
+
+```bash
+npm install
+npm start            # npx serve -l 8080 .
 ```
 
 Open http://localhost:8080 — works best on Chrome/Chromium for S Pen pressure support.
 
-## Testing on Galaxy Tab S10+
+The app is **base-path independent** (relative URLs everywhere, the service
+worker resolves its precache against its own scope), so the same tree runs
+from `/`, `/Quart/`, or any custom domain.
 
-1. Deploy to a static host (GitHub Pages, Netlify, Vercel, Cloudflare Pages)
-2. On the Tab S10+, open in Chrome
-3. Tap "Add to Home screen" for PWA experience
-4. For full S Pen testing, use Chrome DevTools remote debugging
+## GitHub Pages
 
-## Packaging for Google Play as TWA
-
-Quart is distributed as a Trusted Web Activity wrapping the PWA. This is the same approach used by many drawing apps (e.g., Infinite Painter, Sketchable).
-
-### Prerequisites
-- Node.js 18+
-- JDK 17+
-- Android SDK (command line tools)
-- Bubblewrap CLI: `npm install -g @bubblewrap/cli`
-
-### Step 1 — Host the PWA
-
-Deploy the `index.html` + `src/` + `assets/` to a production HTTPS origin.
-The origin MUST serve `assetlinks.json` for TWA verification.
-
-### Step 2 — Generate keystore
+One-time repo setup (admin):
 
 ```bash
-keytool -genkey -v -keystore keystore/quart-release.jks \
-  -alias quart -keyalg RSA -keysize 2048 -validity 10000 \
-  -storepass QUART_STORE_PASS -keypass QUART_KEY_PASS
+gh api repos/artistso/Quart/pages -X POST -f build_type=workflow   # or Settings → Pages → Source: GitHub Actions
 ```
 
-### Step 3 — Initialize TWA
+After that, every push to `main` runs `node scripts/build.js` and deploys
+`dist/` (once the workflow is activated; until then use the branch-deployment
+mode above, which serves the repo root directly). The build:
+
+1. copies the servable set (`index.html`, `manifest.json`, `sw.js`, `src/`, `assets/`, `.well-known/`, `.nojekyll`),
+2. stamps the service-worker cache name with the package version,
+3. emits `.well-known/assetlinks.json` (uses the `QUART_SHA256_FINGERPRINT` secret when set),
+4. emits `404.html`, then runs `scripts/validate.js` over the output.
+
+`npm run build` / `npm test` do the same locally.
+
+## Android APK / AAB (Bubblewrap TWA)
+
+The `android/` directory is a **generated, committed** Bubblewrap project.
+The source of truth is `android/twa-manifest.json`; regeneration is
+deterministic:
 
 ```bash
-bubblewrap init --manifest=https://YOUR-ORIGIN/manifest.json
+npm install
+npm run android:generate                              # needs reachable icon URLs (production)
+# offline / from a local mirror:
+npx serve -l 8080 . &
+npm run android:generate -- --icon-base http://127.0.0.1:8080/
 ```
 
-Answer prompts:
-- Package name: `app.quart.editor`
-- App name: `Quart`
-- Launcher name: `Quart`
-- Host: your origin
-- Signing key path: `./keystore/quart-release.jks`
+`scripts/generate-android.mjs` regenerates the whole Gradle project, writes
+back the production `twa-manifest.json` and refreshes `manifest-checksum.txt`
+so `bubblewrap build` never prompts.
 
-### Step 4 — Build AAB (Android App Bundle)
+### Building the APK
+
+Requirements: Node 18+, JDK 17, Android SDK (or just run the workflow).
 
 ```bash
-bubblewrap build
+npm run twa          # cd android && bubblewrap build   → signed APK + AAB
 ```
 
-This produces `app-release-bundle.aab` — upload this to Google Play Console.
+Passwords come from `BUBBLEWRAP_KEYSTORE_PASSWORD` / `BUBBLEWRAP_KEY_PASSWORD`
+(or you are prompted). The keystore path is `android/keystore/quart-release.jks`
+(ignored by git).
 
-### Step 5 — Google Play Console Setup
+The `Android APK / AAB` workflow does this on GitHub runners for every
+release (or manual dispatch): it uses the repo secrets
+`PLAY_KEYSTORE_B64` / `PLAY_KEYSTORE_PASSWORD` / `PLAY_KEY_PASSWORD` when
+present, otherwise generates an ephemeral key, then uploads
+`quart-android` artifacts and attaches the APK/AAB to the release. The
+SHA-256 upload-key fingerprint is printed in the log.
 
-1. Create app: "Quart"
-2. Pricing: $0.99 USD, one-time purchase (not subscription, not free)
-3. Category: Art & Design
-4. Content rating: Everyone
-5. Upload AAB to Internal testing → Closed → Production
-6. Add `.well-known/assetlinks.json` to your web origin for TWA verification
+### Install on the Galaxy Tab S10+
 
-### Step 6 — Asset Links
+1. Run the workflow (or `npm run twa` locally with a JDK 17 + Android SDK).
+2. `adb install app-release-signed.apk`.
+3. The APK opens `https://artistso.github.io/Quart/` in a Trusted Web
+   Activity; without a verified asset link it runs in fallback mode with the
+   browser chrome hidden as much as the platform allows.
 
-After first upload, Play Console provides the SHA-256 fingerprint. Create:
+### Digital Asset Links (verified TWA)
 
+GitHub Pages project sites live under `artistso.github.io/Quart/`, but Android
+requires `/.well-known/assetlinks.json` at the **domain root**, which a project
+repo cannot control. Options:
+
+- Serve Quart from your own domain (custom domain for Pages or any static
+  host), put the fingerprint from the build log into
+  `.well-known/assetlinks.json` + the `QUART_SHA256_FINGERPRINT` secret, and
+  the APK verifies.
+- Stay on `github.io`: the APK still works (unverified fallback).
+
+### Google Play Console
+
+1. Create app "Quart", category Art & Design, rating Everyone.
+2. Pricing $0.99 USD one-time purchase.
+3. Upload `app-release-bundle.aab` (signed with your **stable** upload key —
+   configure the `PLAY_KEYSTORE_*` secrets).
+4. Internal testing → Closed → Production.
+
+## Regenerating icons
+
+```bash
+npm run icons        # ImageMagick; renders assets/icon-*.png, favicons, splash
 ```
-https://YOUR-ORIGIN/.well-known/assetlinks.json
-```
-```json
-[{
-  "relation": ["delegate_permission/common.handle_all_urls"],
-  "target": {
-    "namespace": "android_app",
-    "package_name": "app.quart.editor",
-    "sha256_cert_fingerprints": ["YOUR_SHA256_FINGERPRINT"]
-  }
-}]
-```
 
-## Galaxy Tab S10+ Optimizations
+## Galaxy Tab S10+ optimizations
 
-- 1752 × 2800 resolution (WQXGA+) at 120 Hz
-- S Pen has 4096 pressure levels, tilt, barrel button (eraser), air actions
-- Our app uses PointerEvents which surface pen pressure as `e.pressure`
-- Barrel button is detected via `e.buttons === 32` / `e.button === 5` → auto-switches to eraser
-- Right-click (two-finger tap) = eyedropper
-- Two-finger pinch = zoom, double-tap = fit to screen
-- The canvas artboard is 2800 × 2000 (4:3-ish), which scales nicely to the Tab's aspect ratio
+- 1752 × 2800 (WQXGA+) at 120 Hz; S Pen 4096 pressure levels, tilt, barrel button.
+- PointerEvents surface pen pressure as `e.pressure`.
+- Barrel button (`e.buttons === 32` / `e.button === 5`) → auto eraser while held.
+- Right-click (two-finger tap) = eyedropper; pinch = zoom; double-tap = fit.
+- Artboard 2800 × 2000 scales to the Tab aspect ratio.
 
-## Keyboard Shortcuts
+## Keyboard shortcuts
 
-| Key | Action |
-|-----|--------|
-| B | Wave Brush |
-| P | Quantum Pen |
-| M | Copic Marker |
-| A | Airbrush |
-| W | Watercolor |
-| Shift+N | Neon |
-| E | Eraser |
-| I | Eyedropper |
-| F | Fill |
-| N | Toggle Onion Skin |
-| [ ] | Prev/Next Brush |
-| Space | Play/Pause |
-| Ctrl+Z | Undo |
-| Ctrl+Shift+Z | Redo |
-| Esc | Close all pucks |
+| Key | Action | Key | Action |
+|-----|--------|-----|--------|
+| B | Wave Brush | E | Eraser |
+| P | Quantum Pen | I | Eyedropper |
+| M | Copic Marker | F | Fill |
+| A | Airbrush | N | Toggle Onion Skin |
+| W | Watercolor | [ / ] | Prev/Next Brush |
+| Shift+N | Neon | Space | Play/Pause |
+| Ctrl+Z | Undo | Ctrl+Shift+Z | Redo |
+| Esc | Close all pucks | | |
 
-## S Pen Gestures
+## S Pen gestures
 
 | Gesture | Action |
 |---------|--------|
 | Draw | Paint with current brush |
-| Hold barrel button + draw | Erase (auto-restore tool on lift) |
-| Tap with button (right-click) | Eyedropper |
+| Hold barrel + draw | Erase (tool restored on lift) |
+| Tap with barrel (right-click) | Eyedropper |
 | Two-finger pinch | Zoom |
-| Double-tap (finger) | Fit artboard to screen |
+| Double-tap (finger) | Fit artboard |
 | Tap orb center | Quantum color jump |
-| Double-tap orb | New drawing (with confirmation) |
+| Double-tap orb | New drawing (with confirm) |
 
-## Project File Format (.QPF)
+## Project file format (.QPF)
 
-Quart uses `.qpf` — a JSON file containing base64-encoded PNG layers and animation frames.
-Import: drag a `.qpf.json` file onto the app (v0.2+ feature — loader coming next).
+`.qpf` = JSON with base64 PNG layers + animation frames. Import by dragging a
+`.qpf.json` onto the app (v0.2+).
