@@ -2,29 +2,38 @@
   "name": "Quart — Quantum Drawing Engine",
   "short_name": "Quart",
   "description": "Quantum-mechanical drawing and animation app for Galaxy Tab S10+",
-  "start_url": "/",
+  "id": "./",
+  "start_url": "./",
+  "scope": "./",
   "display": "fullscreen",
   "orientation": "landscape",
   "background_color": "#0a0a12",
   "theme_color": "#7c5cff",
+  "version": "0.2.0",
   "categories": ["art", "design", "graphics"],
   "icons": [
     {
       "src": "assets/icon-192.png",
       "sizes": "192x192",
       "type": "image/png",
-      "purpose": "any maskable"
+      "purpose": "any"
     },
     {
       "src": "assets/icon-512.png",
       "sizes": "512x512",
       "type": "image/png",
-      "purpose": "any maskable"
+      "purpose": "any"
+    },
+    {
+      "src": "assets/icon-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
     }
   ],
   "screenshots": [],
   "shortcuts": [
-    { "name": "New Drawing", "url": "/?new" },
-    { "name": "Animation", "url": "/?anim" }
+    { "name": "New Drawing", "url": "./?new" },
+    { "name": "Animation", "url": "./?anim" }
   ]
 }

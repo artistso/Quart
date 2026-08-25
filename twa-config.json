@@ -8,8 +8,8 @@
   "themeColor": "#0a0a12",
   "navigationColor": "#000000",
   "backgroundColor": "#0a0a12",
-  "versionCode": 1,
-  "versionName": "0.1.0",
+  "versionCode": 2,
+  "versionName": "0.2.0",
   "startUrl": "/",
   "iconUrl": "/assets/icon-512.png",
   "maskableIconUrl": "/assets/icon-512.png",
@@ -18,8 +18,8 @@
     "path": "./keystore/quart-release.jks",
     "alias": "quart"
   },
-  "appVersionName": "0.1.0",
-  "appVersionCode": 1,
+  "appVersionName": "0.2.0",
+  "appVersionCode": 2,
   "shortcuts": [
     {
       "name": "New Drawing",

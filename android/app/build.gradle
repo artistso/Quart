@@ -1,0 +1,64 @@
+plugins {
+    id 'com.android.application'
+}
+
+def vName = (project.findProperty('appVersionName') ?: '0.2.0').toString()
+def vCode = (project.findProperty('appVersionCode') ?: '2').toString().toInteger()
+
+def keystoreFile = rootProject.file('keystore/quart-release.jks')
+def keystorePass = System.getenv('QUART_KEYSTORE_PASS') ?: 'quart-quart-4242'
+
+android {
+    namespace 'app.quart.editor'
+    compileSdk 34
+
+    defaultConfig {
+        applicationId "app.quart.editor"
+        minSdk 26
+        targetSdk 34
+        versionCode vCode
+        versionName vName
+    }
+
+    signingConfigs {
+        release {
+            if (keystoreFile.exists()) {
+                storeFile keystoreFile
+                storePassword keystorePass
+                keyAlias 'quart'
+                keyPassword keystorePass
+            }
+        }
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            shrinkResources false
+            if (keystoreFile.exists()) {
+                signingConfig signingConfigs.release
+            }
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+
+    lint {
+        checkReleaseBuilds false
+        abortOnError false
+    }
+
+    applicationVariants.all { variant ->
+        variant.outputs.all {
+            outputFileName = "Quart-${vName}-android.apk"
+        }
+    }
+}
+
+dependencies {
+    // WebViewAssetLoader — serves bundled assets on a secure https origin
+    implementation 'androidx.webkit:webkit:1.11.0'
+}

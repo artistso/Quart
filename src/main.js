@@ -25,8 +25,11 @@ const Quart = {
     }
 
     console.log('%c◈ QUART', 'font-size:24px; font-weight:bold; color:#7c5cff; text-shadow:0 0 10px #7c5cff;');
-    console.log('%cQuantum Drawing Engine v0.1 — Tab S10+ Edition', 'color:#ff3366; font-size:11px;');
+    console.log('%cQuantum Drawing Engine v0.2 — Tab S10+ Edition', 'color:#ff3366; font-size:11px;');
     console.log('%c"Everything is a superposition until observed."', 'color:#00e5ff; font-style:italic;');
+
+    // Platform I/O (downloads + .qpf import)
+    QuartIO.init();
 
     // Initialize quantum field background
     QuantumField.init();
@@ -84,6 +87,14 @@ const Quart = {
       if (e.key === 'z' && (e.ctrlKey || e.metaKey)) {
         e.preventDefault();
         if (e.shiftKey) Renderer.redo(); else Renderer.undo();
+      }
+      if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+        e.preventDefault();
+        ExportPuckUI.exportQPF();
+      }
+      if ((e.ctrlKey || e.metaKey) && e.key === 'o') {
+        e.preventDefault();
+        QuartIO.openProject();
       }
       if (e.key === ' ') { e.preventDefault(); Animation.playing ? Animation.stop() : Animation.play(); }
       if (e.key === '[') { this.cycleBrush(-1); }

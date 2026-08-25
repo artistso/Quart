@@ -1,12 +1,30 @@
 <p align="center">
-  <img src="assets/icon-512.png" width="128" alt="Quart">
+  <img src="assets/icon-512.png" width="140" alt="Quart" />
 </p>
 
 <h1 align="center">◈ QUART</h1>
 <p align="center"><em>Quantum Drawing Engine</em></p>
 
 <p align="center">
-A next-generation drawing & animation app for the Galaxy Tab S10+, built on a quantum-mechanical core. $0.99 on Google Play.
+  A next-generation drawing & animation app for the Galaxy Tab S10+, built on a
+  quantum-mechanical core. $0.99 on Google Play · free on GitHub.
+</p>
+
+<p align="center">
+  <a href="https://github.com/artistso/Quart/releases/latest"><img src="https://img.shields.io/github/v/release/artistso/Quart?style=flat-square&label=release&color=7c5cff" alt="release"></a>
+  <a href="https://github.com/artistso/Quart/actions/workflows/build-apk.yml"><img src="https://img.shields.io/github/actions/workflow/status/artistso/Quart/build-apk.yml?style=flat-square&label=APK%20build&color=ff3366" alt="APK build"></a>
+  <a href="https://artistso.github.io/Quart/"><img src="https://img.shields.io/badge/live-GitHub%20Pages-00e5ff?style=flat-square" alt="GitHub Pages"></a>
+  <img src="https://img.shields.io/badge/platform-Android%20·%20Web%20PWA-34d399?style=flat-square" alt="platform">
+</p>
+
+<p align="center">
+  <a href="https://github.com/artistso/Quart/releases/latest">
+    <img src="https://img.shields.io/badge/⬇%20DOWNLOAD%20APK-latest%20release-7c5cff?style=for-the-badge" alt="Download APK">
+  </a>
+  &nbsp;
+  <a href="https://artistso.github.io/Quart/">
+    <img src="https://img.shields.io/badge/◈%20OPEN%20WEB%20APP-GitHub%20Pages-ff3366?style=for-the-badge" alt="Open Web App">
+  </a>
 </p>
 
 ---
@@ -14,6 +32,17 @@ A next-generation drawing & animation app for the Galaxy Tab S10+, built on a qu
 ## Core Philosophy
 
 Quart treats every brush stroke as a quantum wavefunction. Particles have position uncertainty, colors exist in superposition until observed, and undo/redo are literal "quantum jumps" through state space. Nothing is generic.
+
+## ✨ New in v0.2
+
+- **Android APK** — the full app bundled into an offline-first installable shell
+  (built & signed automatically by CI, published to [Releases](https://github.com/artistso/Quart/releases))
+- **GitHub Pages deployment** — the PWA is live at
+  [artistso.github.io/Quart](https://artistso.github.io/Quart/)
+- **Project import** — open/drag-drop `.qpf` files back into Quart (layers,
+  frames, theme & brush state all restored)
+- **App icons & installability** — full PWA icon set (any + maskable), favicon, shortcuts
+- **Relative-path PWA** — service worker + manifest now work at any hosting depth
 
 ## Key Features
 
@@ -25,122 +54,97 @@ Quart treats every brush stroke as a quantum wavefunction. Particles have positi
 - **Quantum Vacuum Eraser** — not just removing, but tunneling through pixels
 - **Wavefunction Smudge** — collapses neighbor colors into your stroke
 - **Entangled Fill** — quantum flood fill with tunneling through near-matching edges
+- **Neon, Marker, Watercolor** — with full pressure→size/opacity mapping
 
 ### ⏱️ Circular Chronos Timeline
-- No more left-to-right linear timeline — Chronos is an expanding circular puck
-- Scrub frames by rotating the ring
-- Expand to reveal frame thumbnails along the orbital ring
-- Playback, onion skinning, add/duplicate frames
-- Configurable FPS (6/8/12/15/24/30)
+- Expanding circular puck — scrub frames by rotating the ring
+- Onion skinning, add/duplicate frames, configurable FPS (4–30)
 
 ### 🎯 Floating Round Pucks
-Every tool is a draggable, glassmorphic circular puck you can position anywhere:
-- **CHRONOS** — timeline (bottom center)
-- **FORGE** — brushes & properties (left side)
-- **SPECTRUM** — color wheel + quantum-entangled Copic palette (right side)
-- **ORBITS** — layers with live thumbnails (right bottom)
-- **QUANTUM** — themes & engine settings (left bottom)
-- **EXPORT** — PNG, PSD, MP4, GIF, WebP, QPF (left top)
-- **◈ Central Orb** — double-tap for new canvas, single-tap for quantum color jump
+Every tool is a draggable glassmorphic puck: **CHRONOS** (timeline) · **FORGE**
+(brushes) · **SPECTRUM** (color wheel + quantum-entangled Copic palette) ·
+**ORBITS** (layers) · **QUANTUM** (themes) · **EXPORT** · **◈ Central Orb**
 
 ### 🌈 Entangled Themes & Copic Palette
-Changing the canvas theme *physically shifts the Copic marker palette* through HSL entanglement. Seven built-in themes:
-- **Void** (deep space black/purple)
-- **Nebula** (violet cosmic clouds)
-- **Plasma** (hot red/orange)
-- **Quantum** (cool blue/cyan)
-- **Aurora** (green northern lights)
-- **Cream** (warm off-white paper)
-- **Paper** (bright natural white)
+Changing the canvas theme *physically shifts the Copic marker palette* through
+HSL entanglement. Seven themes: Void · Nebula · Plasma · Quantum · Aurora ·
+Cream · Paper
 
-### 🎬 Animation Features (from Procreate Dreams, ToonSquid, ToonBoom)
-- Frame-by-frame animation with onion skinning (previous + next frame with different blend)
-- Live frame thumbnails on circular timeline
-- Layer-based compositing
-- Playback scrubbing by rotating the Chronos puck
-- Export to GIF, WebM/MP4, WebP stickers, layered PNGs, and native QPF project files
+## 📦 Install
 
-### ✨ UX Details
-- **Transparent glassmorphic UI** — all panels are frosted-glass circles
-- **Magnetic edge snapping** for pucks
-- **S Pen pressure support** — pressure maps to both size and opacity
-- **Two-finger pinch zoom & pan**
-- **Tap outside any puck** to instantly collapse all panels
-- **Keyboard shortcuts** (B=brush, P=pen, E=eraser, F=fill, space=play, N=onion, Ctrl+Z=undo)
-- **Pentatonic quantum UI sounds** via Web Audio
-- **Animated quantum field background** with entangled particles that react to touch
+### Android (APK — recommended for Tab S10+)
 
-### 💾 Export
-- **PNG** — flattened current frame
-- **PSD-style** — each layer as separate PNG
-- **MP4/WebM** — animated loop
-- **GIF** — animated loop
-- **WebP** — sticker with transparency (no background)
-- **QPF** — native Quart Project File (JSON + PNG layers, fully reimportable)
+1. Grab the latest `Quart-x.y.z-android.apk` from
+   [Releases](https://github.com/artistso/Quart/releases/latest)
+2. Allow *Install unknown apps* for your browser or file manager
+3. Install & draw. The app is **fully offline**; exports (PNG / WebP / WebM / `.qpf`)
+   are saved straight into your **Downloads** folder
+4. S Pen pressure, tilt and barrel-button erase all work
 
-## Project Structure
+### Web (PWA)
 
-```
-Quart/
-├── index.html              # App entry
-├── manifest.json           # PWA manifest for Play Store wrapping
-├── assets/
-│   ├── icon-192.png
-│   └── icon-512.png
-└── src/
-    ├── styles/
-    │   └── main.css        # Full transparent/glassmorphic theme
-    ├── quantum/
-    │   ├── engine.js       # Quantum mechanics core (wavefunctions, HBAR, path integrals)
-    │   ├── particles.js    # Background quantum field
-    │   └── audio.js        # Pentatonic quantum UI sounds
-    ├── themes/
-    │   └── copic.js        # Copic palette + quantum theme entanglement
-    ├── canvas/
-    │   ├── brushes.js      # All 8 quantum brush types
-    │   ├── renderer.js     # Layer compositing, undo/redo, input
-    │   └── animation.js    # Frame timeline + onion skinning
-    └── ui/
-        ├── puck.js         # Draggable/expandable puck system
-        ├── timeline-puck.js
-        ├── palette-puck.js
-        ├── tool-puck.js
-        ├── layer-puck.js
-        ├── export-puck.js
-        └── central-orb.js
-```
+Open [artistso.github.io/Quart](https://artistso.github.io/Quart/) — best in
+Chrome. *Add to Home screen* for the fullscreen PWA experience.
 
-## Building for Google Play
-
-1. Wrap as TWA (Trusted Web Activity) using Bubblewrap:
-   ```bash
-   npm install -g @bubblewrap/cli
-   bubblewrap init --manifest=https://your-deploy-url/manifest.json
-   bubblewrap build
-   ```
-2. Upload the generated `.aab` to Google Play Console
-3. Price: $0.99 one-time purchase (no subscriptions, no IAP)
-
-## Local Development
-
-Serve the directory with any static server:
+### Local development
 
 ```bash
-npx serve .
-# or
-python3 -m http.server 8080
+python3 -m http.server 8080    # or: npx serve -l 8080 .
+# → http://localhost:8080
 ```
 
-Open in Chrome on a tablet/desktop for the full experience. Optimized for Galaxy Tab S10+ (1752×2800, 120Hz, S Pen pressure support).
+## 🚀 How shipping works (CI)
 
-## Physics Easter Eggs
+| Workflow | What it does |
+|----------|--------------|
+| `Build Android APK` | Stages the web app into `android/`, builds a **signed release APK**, publishes it to a GitHub Release on the repo front page |
+| `Deploy GitHub Pages` | Ships the PWA to **GitHub Pages** on every push to `main` |
 
-- The quantum constant `HBAR = 2.4` controls brush jitter magnitude
-- Color superposition shifts hues with a Doppler-like effect based on stroke velocity
-- The central orb's rings rotate at different angular velocities (like electron orbitals)
-- Undo is literally "collapsing the wavefunction" to a previous state
-- Fill uses quantum tunneling — there's a 0.5% chance paint leaks through edges
+- **Versioning** — bump the [`VERSION`](VERSION) file; CI derives `versionName`
+  (`0.2.0`) and `versionCode` (`00200`) from it and tags the release
+- **Signing** — the first CI run bootstraps a sideload keystore
+  (`android/keystore/quart-release.jks`) and commits it back, so every build
+  afterwards upgrades cleanly over the previous one. *(Sideload key only —
+  Google Play releases get their own private key, see [BUILD.md](BUILD.md).)*
+- **Offline shell** — the APK serves the bundled web app over
+  `https://appassets.androidplatform.net` via `WebViewAssetLoader`, so service
+  workers, pointer events and pressure all behave like the real web app
 
-## License
+## 📁 Project Structure
 
-© 2026 Quart. All rights reserved.
+```
+├── index.html            # App shell (pucks, canvases, topbar)
+├── manifest.json         # PWA manifest (relative paths → Pages-friendly)
+├── sw.js                 # Quantum offline cache
+├── src/
+│   ├── canvas/           # brushes · renderer · animation
+│   ├── quantum/          # engine · particles · audio
+│   ├── ui/               # puck framework + tool/color/layer/timeline/export pucks
+│   ├── themes/           # entangled Copic palette
+│   ├── platform/         # io.js — downloads + .qpf import (web & Android bridge)
+│   └── styles/           # glassmorphic UI
+├── assets/               # PWA + maskable icons, favicon
+├── android/              # Offline WebView shell (Gradle project)
+│   └── app/src/main/java/app/quart/editor/
+│       ├── MainActivity.java     # asset loader · file chooser · immersive
+│       └── AndroidSaver.java     # JS bridge → MediaStore Downloads
+├── scripts/stage-android.sh      # web → android assets
+└── .github/workflows/    # build-apk.yml · deploy-pages.yml
+```
+
+## 📋 Documentation
+
+- **[BUILD.md](BUILD.md)** — local builds, APK packaging, signing, Play Store path
+- **Keyboard shortcuts & S Pen gestures** — see BUILD.md
+
+## Roadmap
+
+- [ ] PSD export (real layered file)
+- [ ] MP4/GIF direct encode (WebCodecs)
+- [ ] Google Play listing ($0.99, TWA + billing)
+- [ ] Cloud sync of `.qpf` projects
+- [ ] Pressure curve editor
+
+---
+
+<p align="center"><em>◈ Everything is a superposition until observed.</em></p>
