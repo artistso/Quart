@@ -1,12 +1,32 @@
 # Building Quart — GitHub Pages + Google Play APK ($0.99 one-time)
 
-Two release pipelines ship from this repo, both as GitHub Actions workflows:
+Two release pipelines ship from this repo. Their GitHub Actions definitions
+live in `ci/github-actions/` and activate the moment they are moved into
+`.github/workflows/` (the CI app token is not allowed to push workflow files,
+so a human push is required for that one step — see "Activating the
+workflows" below):
 
-| Pipeline | Workflow | Output |
-|----------|----------|--------|
-| Web / PWA | `.github/workflows/pages.yml` | https://artistso.github.io/Quart/ |
-| Android TWA | `.github/workflows/android.yml` | `app-release-signed.apk` + `app-release-bundle.aab` |
-| Sanity gate | `.github/workflows/ci.yml` | validates + builds on every push/PR |
+| Pipeline | Definition | Output |
+|----------|------------|--------|
+| Web / PWA | `ci/github-actions/pages.yml` | https://artistso.github.io/Quart/ |
+| Android TWA | `ci/github-actions/android.yml` | `app-release-signed.apk` + `app-release-bundle.aab` |
+| Sanity gate | `ci/github-actions/ci.yml` | validates + builds on every push/PR |
+
+### Zero-config GitHub Pages (no Actions needed)
+
+The repo root is directly servable, so Pages works **right now** with branch
+deployment: Settings → Pages → Source: *Deploy from a branch* → `main`, `/ (root)`.
+
+### Activating the workflows
+
+```bash
+git mv ci/github-actions/*.yml .github/workflows/
+git commit -m "Enable Pages + Android pipelines"
+git push                      # from a human account
+```
+
+After that, every push to `main` deploys Pages and every release builds the
+APK/AAB. Also set Settings → Pages → Source: *GitHub Actions*.
 
 ## Local development
 
@@ -30,7 +50,8 @@ gh api repos/artistso/Quart/pages -X POST -f build_type=workflow   # or Settings
 ```
 
 After that, every push to `main` runs `node scripts/build.js` and deploys
-`dist/`. The build:
+`dist/` (once the workflow is activated; until then use the branch-deployment
+mode above, which serves the repo root directly). The build:
 
 1. copies the servable set (`index.html`, `manifest.json`, `sw.js`, `src/`, `assets/`, `.well-known/`, `.nojekyll`),
 2. stamps the service-worker cache name with the package version,

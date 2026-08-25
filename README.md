@@ -94,7 +94,8 @@ Quart/
 │   ├── validate.js         # artifact validator (npm test)
 │   ├── generate-android.mjs# deterministic TWA regeneration
 │   └── build-icons.sh      # icon artwork renderer
-├── .github/workflows/      # pages.yml · android.yml · ci.yml
+├── ci/github-actions/      # ready-made pages.yml · android.yml · ci.yml
+│                           # (move to .github/workflows/ to activate)
 └── src/
     ├── styles/
     │   └── main.css        # Full transparent/glassmorphic theme
@@ -121,8 +122,13 @@ Quart/
 ## Building for Google Play
 
 The `android/` directory is a committed Bubblewrap TWA project driven by
-`android/twa-manifest.json`, and the **Android APK / AAB** workflow builds
-it on GitHub runners for every release:
+`android/twa-manifest.json`:
+
+- **Local build:** `npm run twa` (needs JDK 17 + Android SDK) → signed APK + AAB.
+- **CI build:** the ready-made `ci/github-actions/android.yml` workflow builds
+  it on GitHub runners for every release once moved into `.github/workflows/`
+  (one human push — the CI app token can't add workflow files; details in
+  [BUILD.md](BUILD.md)).
 
 1. `Actions → Android APK / AAB → Run workflow` (or cut a release)
 2. Download `quart-android` — `app-release-signed.apk` (sideload with `adb install`) and `app-release-bundle.aab` (Play Console upload)
@@ -135,10 +141,12 @@ SDK). Full details in [BUILD.md](BUILD.md).
 
 ## GitHub Pages
 
-`Actions → GitHub Pages` deploys `dist/` on every push to `main`
-(one-time setup: Settings → Pages → Source: **GitHub Actions**).
-The app is base-path independent, so it runs at
-`https://artistso.github.io/Quart/` or any custom domain.
+Fastest: Settings → Pages → Source: *Deploy from a branch* → `main`, `/ (root)` —
+the repo root is directly servable (`.nojekyll` included).
+Automated: move `ci/github-actions/pages.yml` into `.github/workflows/`
+(one human push) and set Pages source to *GitHub Actions*; every push to
+`main` then builds and deploys `dist/`. The app is base-path independent, so
+it runs at `https://artistso.github.io/Quart/` or any custom domain.
 
 ## Local Development
 
