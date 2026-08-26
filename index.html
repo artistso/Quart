@@ -7,6 +7,10 @@
   <meta name="theme-color" content="#0a0a12" />
   <title>QUART — Quantum Drawing Engine</title>
   <link rel="manifest" href="manifest.json" />
+  <link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32.png" />
+  <link rel="apple-touch-icon" href="assets/apple-touch-icon.png" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <link rel="stylesheet" href="src/styles/main.css" />
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -320,6 +324,7 @@
         <div>Quart Project File</div>
         <div class="format-badge">.qpf</div>
         <button class="export-btn" data-format="qpf">Save Project</button>
+        <button class="export-btn" data-format="qpf-open">Open Project…</button>
       </div>
     </div>
   </div>
@@ -329,7 +334,7 @@
     <div class="brand">
       <span class="brand-mark">◈</span>
       <span class="brand-name">QUART</span>
-      <span class="brand-sub">v0.1 quantum</span>
+      <span class="brand-sub">v0.2 quantum</span>
     </div>
     <div class="doc-info">
       <input type="text" id="doc-name" value="Untitled Quantum Frame" />
@@ -359,6 +364,7 @@
   <div id="toast-container"></div>
 
   <!-- Audio context for quantum UI sounds -->
+  <script src="src/platform/io.js"></script>
   <script src="src/quantum/audio.js"></script>
   <script src="src/quantum/engine.js"></script>
   <script src="src/quantum/particles.js"></script>

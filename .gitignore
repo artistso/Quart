@@ -1,2 +1,14 @@
-assets/icon-*.png
 .DS_Store
+node_modules/
+_site/
+
+# Android build outputs (keystore is intentionally committed — sideload key)
+android/.gradle/
+android/build/
+android/app/build/
+android/local.properties
+android/app/src/main/assets/public/
+
+*.keystore
+*.jks
+!android/keystore/quart-release.jks

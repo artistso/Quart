@@ -1,103 +1,85 @@
-# Building Quart for Google Play — $0.99 One-Time Purchase
+# Building Quart — APK, Pages & Google Play
 
 ## Development
 
 ```bash
-# Serve locally
-python3 -m http.server 8080
-# or
-npx serve -l 8080 .
+python3 -m http.server 8080     # or: npx serve -l 8080 .
 ```
 
 Open http://localhost:8080 — works best on Chrome/Chromium for S Pen pressure support.
 
-## Testing on Galaxy Tab S10+
+## Shipping (CI does this for you)
 
-1. Deploy to a static host (GitHub Pages, Netlify, Vercel, Cloudflare Pages)
-2. On the Tab S10+, open in Chrome
-3. Tap "Add to Home screen" for PWA experience
-4. For full S Pen testing, use Chrome DevTools remote debugging
+| Trigger | Result |
+|---------|--------|
+| Push to `main` | **Signed APK** built & attached to the [GitHub Release](https://github.com/artistso/Quart/releases) · **PWA deployed** to [GitHub Pages](https://artistso.github.io/Quart/) |
+| Push to `arena/**` | Same builds, used as previews |
+| Push a tag `v*` | Release build pinned to that tag |
 
-## Packaging for Google Play as TWA
+**Cutting a release:** bump the [`VERSION`](VERSION) file (e.g. `0.3.0`) and push.
+CI derives `versionName` and `versionCode` (`major*10000 + minor*100 + patch`)
+from it, builds, and publishes release `v0.3.0` automatically.
 
-Quart is distributed as a Trusted Web Activity wrapping the PWA. This is the same approach used by many drawing apps (e.g., Infinite Painter, Sketchable).
+## The Android APK
 
-### Prerequisites
-- Node.js 18+
-- JDK 17+
-- Android SDK (command line tools)
-- Bubblewrap CLI: `npm install -g @bubblewrap/cli`
+The APK in Releases is an **offline-first WebView shell**: the entire web app is
+bundled into the APK and served over the secure origin
+`https://appassets.androidplatform.net` using
+[`WebViewAssetLoader`](https://developer.android.com/reference/androidx/webkit/WebViewAssetLoader).
+That means:
 
-### Step 1 — Host the PWA
+- works with **zero network** (Google Fonts degrade gracefully to system fonts)
+- service worker, Pointer Events and **S Pen pressure** behave exactly like the web app
+- exports are streamed over a chunked JS bridge into the system **Downloads** folder
+  (`MediaStore` on Android 10+, app exports dir on 8–9)
+- "Open Project…" uses the native document picker (`onShowFileChooser`)
 
-Deploy the `index.html` + `src/` + `assets/` to a production HTTPS origin.
-The origin MUST serve `assetlinks.json` for TWA verification.
-
-### Step 2 — Generate keystore
-
-```bash
-keytool -genkey -v -keystore keystore/quart-release.jks \
-  -alias quart -keyalg RSA -keysize 2048 -validity 10000 \
-  -storepass QUART_STORE_PASS -keypass QUART_KEY_PASS
-```
-
-### Step 3 — Initialize TWA
+### Building locally
 
 ```bash
-bubblewrap init --manifest=https://YOUR-ORIGIN/manifest.json
+npm run apk          # stages web assets + gradle assembleRelease
 ```
 
-Answer prompts:
-- Package name: `app.quart.editor`
-- App name: `Quart`
-- Launcher name: `Quart`
-- Host: your origin
-- Signing key path: `./keystore/quart-release.jks`
+Prerequisites: JDK 17, Android SDK (compileSdk 34). Output:
+`android/app/build/outputs/apk/release/Quart-<version>-android.apk`.
 
-### Step 4 — Build AAB (Android App Bundle)
+### Signing
+
+- CI bootstraps a **sideload keystore** on first run and commits it back to
+  `android/keystore/quart-release.jks` (password: `quart-quart-4242`, alias
+  `quart`). Every CI build after that signs with the same identity, so new
+  APKs install as **upgrades** over older ones.
+- This keystore is public-by-design for GitHub distribution. **Never use it for
+  Google Play** — generate a private one:
 
 ```bash
-bubblewrap build
+keytool -genkey -v -keystore quart-play.jks -alias quart \
+  -keyalg RSA -keysize 2048 -validity 10000
 ```
 
-This produces `app-release-bundle.aab` — upload this to Google Play Console.
+## Google Play path ($0.99 one-time purchase)
 
-### Step 5 — Google Play Console Setup
+Quart's Play listing is planned as a **TWA** wrapping the hosted PWA
+(`twa-config.json` holds the listing config). Prerequisites: Node 18+, JDK 17+,
+Android SDK, `npm i -g @bubblewrap/cli`.
 
-1. Create app: "Quart"
-2. Pricing: $0.99 USD, one-time purchase (not subscription, not free)
-3. Category: Art & Design
-4. Content rating: Everyone
-5. Upload AAB to Internal testing → Closed → Production
-6. Add `.well-known/assetlinks.json` to your web origin for TWA verification
-
-### Step 6 — Asset Links
-
-After first upload, Play Console provides the SHA-256 fingerprint. Create:
-
-```
-https://YOUR-ORIGIN/.well-known/assetlinks.json
-```
-```json
-[{
-  "relation": ["delegate_permission/common.handle_all_urls"],
-  "target": {
-    "namespace": "android_app",
-    "package_name": "app.quart.editor",
-    "sha256_cert_fingerprints": ["YOUR_SHA256_FINGERPRINT"]
-  }
-}]
-```
+1. Deploy the PWA (done — GitHub Pages serves it)
+2. Generate a **private** keystore (see above)
+3. `bubblewrap init --manifest=https://artistso.github.io/Quart/manifest.json`
+   → package `app.quart.editor`, host `artistso.github.io`
+4. `bubblewrap build` → `app-release-bundle.aab` → upload to Play Console
+5. Serve `.well-known/assetlinks.json` with the Play SHA-256 fingerprint
+   *(note: project pages can't own the domain root — for full TWA verification
+   host the PWA on a custom domain, or keep shipping the bundled APK)*
+6. Play Console: pricing $0.99 one-time · category Art & Design · Everyone
 
 ## Galaxy Tab S10+ Optimizations
 
-- 1752 × 2800 resolution (WQXGA+) at 120 Hz
-- S Pen has 4096 pressure levels, tilt, barrel button (eraser), air actions
-- Our app uses PointerEvents which surface pen pressure as `e.pressure`
-- Barrel button is detected via `e.buttons === 32` / `e.button === 5` → auto-switches to eraser
-- Right-click (two-finger tap) = eyedropper
-- Two-finger pinch = zoom, double-tap = fit to screen
-- The canvas artboard is 2800 × 2000 (4:3-ish), which scales nicely to the Tab's aspect ratio
+- 1752 × 2800 (WQXGA+) at 120 Hz; artboard is 2800 × 2000
+- S Pen: 4096 pressure levels, tilt, barrel button (eraser)
+- PointerEvents surface pen pressure as `e.pressure`
+- Barrel button = `e.buttons === 32` → auto-switch to eraser, restore on lift
+- Right-click (two-finger tap) = eyedropper · pinch = zoom · double-tap = fit
 
 ## Keyboard Shortcuts
 
@@ -115,8 +97,10 @@ https://YOUR-ORIGIN/.well-known/assetlinks.json
 | N | Toggle Onion Skin |
 | [ ] | Prev/Next Brush |
 | Space | Play/Pause |
-| Ctrl+Z | Undo |
-| Ctrl+Shift+Z | Redo |
+| Ctrl+Z | Undo (quantum jump back) |
+| Ctrl+Shift+Z | Redo (quantum leap forward) |
+| Ctrl+S | Save Project (.qpf) |
+| Ctrl+O | Open Project |
 | Esc | Close all pucks |
 
 ## S Pen Gestures
@@ -133,5 +117,6 @@ https://YOUR-ORIGIN/.well-known/assetlinks.json
 
 ## Project File Format (.QPF)
 
-Quart uses `.qpf` — a JSON file containing base64-encoded PNG layers and animation frames.
-Import: drag a `.qpf.json` file onto the app (v0.2+ feature — loader coming next).
+A `.qpf` file is JSON containing base64-encoded PNG layers and animation
+frames, plus theme/brush/fps state. **Import** via EXPORT puck → *Open
+Project…*, Ctrl+O, or drag & drop the file onto the app.

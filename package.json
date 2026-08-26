@@ -1,13 +1,13 @@
 {
   "name": "quart",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Quart — Quantum Drawing Engine for Galaxy Tab S10+",
   "private": true,
   "scripts": {
     "start": "npx serve -l 8080 .",
-    "build": "node scripts/build.js",
-    "twa": "bubblewrap build",
-    "twa:init": "bubblewrap init --manifest=./manifest.json"
+    "stage:android": "bash scripts/stage-android.sh",
+    "apk": "npm run stage:android && cd android && gradle assembleRelease",
+    "release": "gh workflow run build-apk.yml"
   },
   "keywords": ["drawing", "animation", "quantum", "android", "tab"],
   "author": "artistso",

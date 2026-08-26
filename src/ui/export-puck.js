@@ -21,6 +21,7 @@ const ExportPuckUI = {
       case 'webp': this.exportSticker(); break;
       case 'psd': this.exportLayers(); break;
       case 'qpf': this.exportQPF(); break;
+      case 'qpf-open': QuartIO.openProject(); break;
     }
   },
 
@@ -30,11 +31,7 @@ const ExportPuckUI = {
     const tc = Renderer.flattenToCanvas();
     const name = (document.getElementById('doc-name')?.value || 'quart').replace(/\s+/g, '-');
     tc.toBlob((blob) => {
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url; a.download = `${name}-frame${Animation.currentFrame+1}-${Date.now()}.png`;
-      a.click();
-      setTimeout(() => URL.revokeObjectURL(url), 1000);
+      QuartIO.download(blob, `${name}-frame${Animation.currentFrame+1}-${Date.now()}.png`, 'image/png');
     }, 'image/png');
     QuantumAudio.success();
     Renderer.showToast('PNG exported (full 2800×2000)');
@@ -58,41 +55,31 @@ const ExportPuckUI = {
     const name = (document.getElementById('doc-name')?.value || 'quart').replace(/\s+/g, '-');
     tc.toBlob((blob) => {
       if (!blob) { Renderer.showToast('WebP not supported, falling back to PNG'); return this._stickerFallback(tc, name); }
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url; a.download = `${name}-sticker-${Date.now()}.webp`;
-      a.click();
-      setTimeout(() => URL.revokeObjectURL(url), 1000);
+      QuartIO.download(blob, `${name}-sticker-${Date.now()}.webp`, 'image/webp');
     }, 'image/webp');
     QuantumAudio.success();
     Renderer.showToast('Sticker exported (transparent)');
   },
 
-  _stickerFallback(tc, name) {
-    const url = tc.toDataURL('image/png');
-    const a = document.createElement('a');
-    a.href = url; a.download = `${name}-sticker-${Date.now()}.png`;
-    a.click();
+  async _stickerFallback(tc, name) {
+    const blob = await QuartIO.dataURLToBlob(tc.toDataURL('image/png'));
+    QuartIO.download(blob, `${name}-sticker-${Date.now()}.png`, 'image/png');
   },
 
-  exportLayers() {
+  async exportLayers() {
     Animation.updateCurrentFrame();
     Renderer.showToast('Exporting layers...');
     let exported = 0;
     const delay = 200;
-    Renderer.layers.forEach((layer, i) => {
-      setTimeout(() => {
-        const a = document.createElement('a');
-        a.href = layer.canvas.toDataURL('image/png');
-        a.download = `quart-${layer.name.replace(/\s+/g,'-')}-${String(i).padStart(2,'0')}.png`;
-        a.click();
-        exported++;
-        if (exported === Renderer.layers.length) {
-          QuantumAudio.success();
-          Renderer.showToast(`${exported} layers exported`);
-        }
-      }, i * delay);
-    });
+    for (let i = 0; i < Renderer.layers.length; i++) {
+      const layer = Renderer.layers[i];
+      await new Promise(r => setTimeout(r, i === 0 ? 0 : delay));
+      const blob = await QuartIO.dataURLToBlob(layer.canvas.toDataURL('image/png'));
+      await QuartIO.download(blob, `quart-${layer.name.replace(/\s+/g,'-')}-${String(i).padStart(2,'0')}.png`, 'image/png');
+      exported++;
+    }
+    QuantumAudio.success();
+    Renderer.showToast(`${exported} layers exported`);
   },
 
   async exportAnimated(type) {
@@ -123,12 +110,7 @@ const ExportPuckUI = {
     const name = (document.getElementById('doc-name')?.value || 'quart').replace(/\s+/g, '-');
     rec.onstop = () => {
       const blob = new Blob(chunks, { type: rec.mimeType });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `${name}-anim-${Date.now()}.webm`;
-      a.click();
-      setTimeout(() => URL.revokeObjectURL(url), 1000);
+      QuartIO.download(blob, `${name}-anim-${Date.now()}.webm`, rec.mimeType || 'video/webm');
       QuantumAudio.success();
       Renderer.showToast('Animation exported');
     };
@@ -146,11 +128,11 @@ const ExportPuckUI = {
     rec.stop();
   },
 
-  exportQPF() {
+  async exportQPF() {
     Animation.updateCurrentFrame();
     const project = {
       app: 'Quart',
-      version: '0.1.0',
+      version: '0.2.0',
       quantumEngine: '1.0',
       name: document.getElementById('doc-name')?.value || 'Untitled',
       created: new Date().toISOString(),
@@ -176,12 +158,7 @@ const ExportPuckUI = {
       }))
     };
     const blob = new Blob([JSON.stringify(project)], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `${project.name.replace(/\s+/g,'-')}.qpf`;
-    a.click();
-    setTimeout(() => URL.revokeObjectURL(url), 1000);
+    await QuartIO.download(blob, `${project.name.replace(/\s+/g,'-')}.qpf`, 'application/json');
     QuantumAudio.success();
     Renderer.showToast('Quart Project saved');
   }
